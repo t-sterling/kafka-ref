@@ -1,0 +1,5 @@
+config:
+  kafkas:
+    - name: local-kafka
+      bootstrapServers: local-kafka.default.svc.cluster.local:9092
+logLevel: debug
