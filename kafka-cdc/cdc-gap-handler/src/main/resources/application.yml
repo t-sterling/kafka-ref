@@ -1,0 +1,25 @@
+server:
+  port: 8083
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:29092,localhost:29093,localhost:29094
+    streams:
+      application-id: cdc-gap-handler
+
+logging:
+  level:
+    org.apache.kafka.streams: INFO
+    org.apache.kafka.clients: INFO
+    org.springframework.kafka.streams: INFO
+    com.processor: DEBUG
+
+gap-handler:
+  state:
+    max-buffer-per-record: 1_000_000
+    store-name: "gap-state-store"
+  topics:
+      cdc-in: CDC-INPUT
+      cdc-out: CDC-OUTPUT
+      cdc-fill-command: CDC-FILL-COMMAND
+      cdc-fill-event: CDC-FILL-EVENT

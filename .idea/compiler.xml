@@ -6,10 +6,16 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="CDCSource" />
-        <module name="CDCProcessor" />
+        <module name="cdc-simulator" />
+        <module name="cdc-compensator" />
+        <module name="cdc-gap-handler" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="kafka-leaderboard" target="23" />
+      <module name="kafka-orderbook" target="23" />
+      <module name="kafka-statemachine" target="23" />
+    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">

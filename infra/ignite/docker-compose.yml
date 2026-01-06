@@ -1,0 +1,33 @@
+services:
+  ignite1:
+    image: apacheignite/ignite:latest
+    container_name: ignite1
+    environment:
+      IGNITE_CFG: /opt/ignite/apache-ignite/config/ignite-config.xml
+      JVM_OPTS: "-Xms1g -Xmx1g"
+    volumes:
+      - ./ignite-config.xml:/opt/ignite/apache-ignite/config/ignite-config.xml:ro
+    ports:
+      - "10801:10800"
+
+  ignite2:
+    image: apacheignite/ignite:latest
+    container_name: ignite2
+    environment:
+      IGNITE_CFG: /opt/ignite/apache-ignite/config/ignite-config.xml
+      JVM_OPTS: "-Xms1g -Xmx1g"
+    volumes:
+      - ./ignite-config.xml:/opt/ignite/apache-ignite/config/ignite-config.xml:ro
+    ports:
+      - "10802:10800"
+
+  ignite3:
+    image: apacheignite/ignite:latest
+    container_name: ignite3
+    environment:
+      IGNITE_CFG: /opt/ignite/apache-ignite/config/ignite-config.xml
+      JVM_OPTS: "-Xms1g -Xmx1g"
+    volumes:
+      - ./ignite-config.xml:/opt/ignite/apache-ignite/config/ignite-config.xml:ro
+    ports:
+      - "10803:10800"

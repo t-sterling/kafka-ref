@@ -10,6 +10,9 @@
     <option name="ignoredFiles">
       <set>
         <option value="$PROJECT_DIR$/CDCCommon/pom.xml" />
+        <option value="$PROJECT_DIR$/kafka-leaderboard/pom.xml" />
+        <option value="$PROJECT_DIR$/kafka-orderbook/pom.xml" />
+        <option value="$PROJECT_DIR$/kafka-statemachine/pom.xml" />
       </set>
     </option>
   </component>

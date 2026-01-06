@@ -1,0 +1,27 @@
+server:
+  port: 8085
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:29092,localhost:29093,localhost:29094
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+app:
+  cdc:
+    topic: CDC-INPUT
+    initial-count: 2000
+    min-events-per-second: 1
+    max-events-per-second: 5
+
+    gap:
+      enabled: true
+      probability: 0.1   # 10% of events are GAP
+
