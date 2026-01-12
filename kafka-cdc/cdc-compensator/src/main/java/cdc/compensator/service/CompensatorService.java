@@ -1,7 +1,7 @@
 package cdc.compensator.service;
 
-import cdc.compensator.domain.FillEvent;
 import cdc.compensator.domain.FillCommand;
+import cdc.compensator.domain.FillEvent;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -60,6 +60,7 @@ public class CompensatorService {
                 new FillEvent(
                     command.recordId(),
                     command.entityType(),
+                    command.eventId(),
                     lastMod,
                     allFields
                 )

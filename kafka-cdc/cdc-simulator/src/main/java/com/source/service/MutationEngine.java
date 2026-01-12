@@ -67,8 +67,6 @@ public class MutationEngine {
 
         if (emitGap) {
 
-            LOG.info("Emitting gap event for {}", e.recordId);
-
             long from = replayId.incrementAndGet();
             long to = from + (1 + rnd.nextInt(3)); // create a small gap
             replayId.set(to);
@@ -82,6 +80,8 @@ public class MutationEngine {
             gap.replayId = to;
             gap.changedFields = Map.of();
             gap.gap = new GapInfo(from, to, "Simulated replayId gap");
+
+            LOG.info("G: {}/{}", gap.recordId, gap.eventId);
 
             publisher.publish(e.recordId, gap);
             return;
@@ -103,7 +103,7 @@ public class MutationEngine {
         normal.replayId = r;
         normal.changedFields = changed;
 
-        LOG.info("Emitting mutation event: {}", normal);
+        LOG.info("N: {}/{}", normal.recordId, normal.eventId);
         publisher.publish(e.recordId, normal);
     }
 

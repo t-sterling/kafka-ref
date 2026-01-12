@@ -1,4 +1,4 @@
 package cdc.compensator.domain;
 
-public record FillCommand(String recordId, String entityType) {
+public record FillCommand(String recordId, String entityType, String eventId) {
 }

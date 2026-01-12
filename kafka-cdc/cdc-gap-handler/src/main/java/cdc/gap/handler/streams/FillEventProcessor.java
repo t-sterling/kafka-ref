@@ -1,8 +1,8 @@
 package cdc.gap.handler.streams;
 
+import cdc.gap.handler.config.GapHandlerMetrics;
 import cdc.gap.handler.domain.CdcEvent;
 import cdc.gap.handler.domain.FillEvent;
-import cdc.gap.handler.streams.state.GapRecordState;
 import org.apache.kafka.streams.processor.api.ContextualProcessor;
 import org.apache.kafka.streams.processor.api.ProcessorContext;
 import org.apache.kafka.streams.processor.api.Record;
@@ -10,20 +10,26 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static cdc.gap.handler.config.GapHandlerMetrics.CDC_EVENT_FILLED_COUNT;
+import static cdc.gap.handler.config.GapHandlerMetrics.CDC_FILL_EVENT_RECEIVED_COUNT;
+
 public class FillEventProcessor extends ContextualProcessor<String, FillEvent, String, CdcEvent> {
 
     private static final Logger LOG = LoggerFactory.getLogger(FillEventProcessor.class);
 
-    private KeyValueStore<String, GapRecordState> stateStore;
-    private final String outputTopic;
+    private final String cdcOutput;
+    private final String stateStoreName;
+    private final GapHandlerMetrics metrics;
 
+    private KeyValueStore<String, GapEventState> stateStore;
     private ProcessorContext<String, CdcEvent> context;
 
-    private final String stateStoreName;
-
-    public FillEventProcessor(String stateStoreName, String outputTopic) {
+    public FillEventProcessor(String stateStoreName,
+                              String cdcOuput,
+                              GapHandlerMetrics metrics) {
         this.stateStoreName = stateStoreName;
-        this.outputTopic = outputTopic;
+        this.cdcOutput = cdcOuput;
+        this.metrics = metrics;
     }
 
     @Override
@@ -35,6 +41,7 @@ public class FillEventProcessor extends ContextualProcessor<String, FillEvent, S
 
     @Override
     public void process(Record<String, FillEvent> record) {
+        this.metrics.count(CDC_FILL_EVENT_RECEIVED_COUNT);
         var recordId = record.key();
         if(recordId != null){
             flush(record);
@@ -42,34 +49,38 @@ public class FillEventProcessor extends ContextualProcessor<String, FillEvent, S
     }
 
     private void flush(Record<String, FillEvent> record){
+
+        LOG.info("flushing: {}/{}", record.value().recordId(), record.value().eventId());
         var recordId = record.key();
         var state = this.stateStore.get(recordId);
         if(state != null && state.buffer != null){
-            LOG.info("Flushing {} events for {}", state.buffer.size(), recordId);
 
             // send a fake cdc 'fill event' which just includes all fields
             //
             var fillEvent = createFillEvent(record.value());
-            this.context.forward(record.withValue(fillEvent), this.outputTopic);
+            this.context.forward(record.withValue(fillEvent), this.cdcOutput);
+            this.metrics.count(CDC_EVENT_FILLED_COUNT);
 
             // now replay anything in the cdc buffer more recent
             //
             while(!state.buffer.isEmpty()) {
 
-                var cdcEvent = state.buffer.pop();
+                var cdcEvent = state.buffer.pollLast();
                 // only flush records with a greater timestamp
                 if(cdcEvent.timestamp > record.value().cutoffLastModifiedEpochMs()) {
-                    this.context.forward(record.withValue(cdcEvent), this.outputTopic);
+                    this.context.forward(record.withValue(cdcEvent), this.cdcOutput);
+                    this.metrics.count(GapHandlerMetrics.CDC_EVENT_FLUSHED_COUNT);
+                } else {
+                    this.metrics.count(GapHandlerMetrics.CDC_EVENT_DROPPED_COUNT);
                 }
             }
             // remove the state - we don't need anymore
             this.stateStore.delete(recordId);
-            LOG.info("Flushed {} events for {}", state.buffer.size(), recordId);
         }
 
     }
 
-    CdcEvent createFillEvent(FillEvent fillEvent){
+    private CdcEvent createFillEvent(FillEvent fillEvent){
 
         // Create a new CdcEvent instance
         CdcEvent cdcEvent = new CdcEvent();

@@ -2,5 +2,6 @@ package cdc.gap.handler.domain;
 
 public record FillCommand(
     String recordId,
-    String entityType
+    String entityType,
+    String eventId
 ) {}

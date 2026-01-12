@@ -4,8 +4,26 @@ server:
 spring:
   kafka:
     bootstrap-servers: localhost:29092,localhost:29093,localhost:29094
+
+    # streaming part is hot path. cdc-in -> gap detection -> cdc-out
+    #
     streams:
       application-id: cdc-gap-handler
+
+    # async side, simple consumer/producer work queue
+    #
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: cdc.gap.handler.serde.FillCommandDeserializer
+      group-id: cdc-gap-handler-worker
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+      properties:
+        spring.json.trusted.packages: "*"
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 logging:
   level:
@@ -13,6 +31,17 @@ logging:
     org.apache.kafka.clients: INFO
     org.springframework.kafka.streams: INFO
     com.processor: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+  endpoint:
+    prometheus:
+      enabled: true
+
 
 gap-handler:
   state:
@@ -23,3 +52,8 @@ gap-handler:
       cdc-out: CDC-OUTPUT
       cdc-fill-command: CDC-FILL-COMMAND
       cdc-fill-event: CDC-FILL-EVENT
+  base-url: http://localhost:8085
+  retries:
+    initial-backoff-seconds: 1
+    max-back-off-seconds: 60
+    max-outage-minutes: 10

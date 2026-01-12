@@ -1,4 +1,4 @@
-package cdc.gap.handler.streams.state;
+package cdc.gap.handler.streams;
 
 import cdc.gap.handler.domain.CdcEvent;
 import java.util.ArrayDeque;
@@ -11,7 +11,7 @@ import java.util.Deque;
  * That means it MUST be serializable (we will JSON-serialize it).
  * The key for this state is recordId (Employee record ID).
  */
-public class GapRecordState {
+public class GapEventState {
 
     /**
      * True if we've seen a GAP for this record and are currently pausing output.

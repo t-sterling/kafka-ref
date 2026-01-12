@@ -9,6 +9,9 @@ import java.util.Map;
 public record FillEvent(
         String recordId,
         String entityType,
+        String eventId,
         long cutoffLastModifiedEpochMs,
-        Map<String, Object> allFields
+        Map<String, Object> allFields,
+        boolean isSuccess,
+        String errMessage
 ){}

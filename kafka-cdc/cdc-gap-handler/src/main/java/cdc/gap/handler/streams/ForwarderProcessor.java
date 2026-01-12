@@ -1,6 +1,7 @@
 package cdc.gap.handler.streams;
 
 import cdc.gap.handler.domain.Either;
+import io.micrometer.core.instrument.Counter;
 import org.apache.kafka.streams.processor.api.ContextualProcessor;
 import org.apache.kafka.streams.processor.api.ProcessorContext;
 import org.apache.kafka.streams.processor.api.Record;
@@ -8,7 +9,7 @@ import org.apache.kafka.streams.processor.api.Record;
 import java.util.function.Function;
 
 /**
- * this really just exists to keep the generics happy. see the topology config
+ * this basically just exists to keep the generics happy. see the topology config
  *
  * @param <T> the thing you want to emit, should be either a U or a V
  * @param <U> a thing you might get
