@@ -2,7 +2,6 @@ package cdc.gap.handler.config;
 
 import cdc.gap.handler.domain.FillCommand;
 import cdc.gap.handler.domain.FillEvent;
-import cdc.gap.handler.service.KafkaBackPressureController;
 import cdc.gap.handler.service.FillerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
@@ -38,6 +37,7 @@ public class KafkaConfig {
         // manual acks because we are treating it as a work queue and must publish before commiting
         //
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
+
         return factory;
     }
 
@@ -52,8 +52,7 @@ public class KafkaConfig {
     @Bean
     FillerService fillerService(KafkaTemplate<String, FillEvent> kafkaTemplate,
                                      RestTemplate restTemplate,
-                                     ObjectMapper objectMapper,
-                                     KafkaBackPressureController fillCommandPauser) {
+                                     ObjectMapper objectMapper) {
         return new FillerService(
                 this.gapHandlerProps.topics().cdcFillEvent(),
                 kafkaTemplate,
@@ -62,12 +61,6 @@ public class KafkaConfig {
                 objectMapper
         );
     }
-
-    /*@Bean
-    FillCommandPauser fillCommandPauser(FillerService fillerService,
-                                        KafkaListenerEndpointRegistry registry){
-        return new FillCommandPauser(fillerService, registry);
-    }*/
 
     @Bean
     public RestTemplate restTemplate() {

@@ -18,8 +18,8 @@ app:
   cdc:
     topic: CDC-INPUT
     initial-count: 2000
-    min-events-per-second: 1
-    max-events-per-second: 5
+    min-events-per-second: 10
+    max-events-per-second: 50
 
     gap:
       enabled: true

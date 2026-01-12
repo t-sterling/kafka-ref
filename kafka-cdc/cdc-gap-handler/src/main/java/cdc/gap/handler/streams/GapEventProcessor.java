@@ -65,7 +65,7 @@ public class GapEventProcessor extends ContextualProcessor<String, CdcEvent, Str
                 // if a gap event is already in flight don't trigger another fill command
                 //
                 if(!isGapEvent(cdcEvent)) {
-                    LOG.info("Buffering: {}/{}", cdcEvent.recordId, cdcEvent.eventId);
+                    LOG.info("buffer: {}/{}", cdcEvent.recordId, cdcEvent.eventId);
                     bufferCdc(cdcEvent);
                 } else {
                     metrics.count(CDC_GAP_EVENT_DETECTED_COUNT);
@@ -74,7 +74,7 @@ public class GapEventProcessor extends ContextualProcessor<String, CdcEvent, Str
 
             } else if(isGapEvent(cdcEvent)){
 
-                LOG.info("G: {}/{}", cdcEvent.recordId, cdcEvent.eventId);
+                LOG.info("publish fill-command: {}/{}", cdcEvent.recordId, cdcEvent.eventId);
                 metrics.count(CDC_GAP_EVENT_DETECTED_COUNT);
                 sendFillCommand(record);
 

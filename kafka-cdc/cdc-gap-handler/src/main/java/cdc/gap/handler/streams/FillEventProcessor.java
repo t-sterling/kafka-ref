@@ -50,7 +50,7 @@ public class FillEventProcessor extends ContextualProcessor<String, FillEvent, S
 
     private void flush(Record<String, FillEvent> record){
 
-        LOG.info("flushing: {}/{}", record.value().recordId(), record.value().eventId());
+        LOG.info("flush: {}/{}", record.value().recordId(), record.value().eventId());
         var recordId = record.key();
         var state = this.stateStore.get(recordId);
         if(state != null && state.buffer != null){

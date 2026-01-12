@@ -81,7 +81,7 @@ public class MutationEngine {
             gap.changedFields = Map.of();
             gap.gap = new GapInfo(from, to, "Simulated replayId gap");
 
-            LOG.info("G: {}/{}", gap.recordId, gap.eventId);
+            LOG.info("gap: {}/{}", gap.recordId, gap.eventId);
 
             publisher.publish(e.recordId, gap);
             return;
@@ -103,7 +103,7 @@ public class MutationEngine {
         normal.replayId = r;
         normal.changedFields = changed;
 
-        LOG.info("N: {}/{}", normal.recordId, normal.eventId);
+        LOG.info("normal: {}/{}", normal.recordId, normal.eventId);
         publisher.publish(e.recordId, normal);
     }
 

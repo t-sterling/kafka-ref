@@ -41,14 +41,13 @@ public class FillerService {
 
     public void processCommand(FillCommand command) throws TransientFillException {
         var fillEvent = execute(command);
+        LOG.info("publish fill-event: {}/{}", fillEvent.recordId(),fillEvent.eventId());
         publishFillEvent(fillEvent);
     }
 
     private FillEvent execute(FillCommand command) throws TransientFillException {
 
         try {
-
-            LOG.info("Request received for record {}", command.recordId());
 
             var url = buildUrl(command);
             var json = restTemplate.getForObject(url, String.class);

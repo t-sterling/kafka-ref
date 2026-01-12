@@ -55,6 +55,7 @@ public class KafkaBackPressureController {
     }
 
     @KafkaListener(
+            id = "cdc-gap-handler-worker",
             topics = "#{'${gap-handler.topics.cdc-fill-command}'}",
             containerFactory = "kafkaListenerContainerFactory"
     )
@@ -80,7 +81,7 @@ public class KafkaBackPressureController {
      * resume the kafka subscription
      */
     private void resume() {
-        MessageListenerContainer container = registry.getListenerContainer("fillWorker");
+        var container = messageListenerContainer();
         if (container != null) {
             container.resume();
         }
@@ -98,10 +99,15 @@ public class KafkaBackPressureController {
      * Pause the Kafka subscription without rebalancing
      */
     private void pause() {
-        MessageListenerContainer container = registry.getListenerContainer("fillWorker");
+        LOG.warn("pausing filer-service subscription due to transient failure.");
+        var container = messageListenerContainer();
         if (container != null) {
             container.pause();
         }
+    }
+
+    private MessageListenerContainer messageListenerContainer() {
+        return registry.getListenerContainer("cdc-gap-handler-worker");
     }
 
     private void startRetryLoop(FillCommand command) {
