@@ -44,9 +44,9 @@ public class KafkaStreamsTest {
     void init() {
         this.topics = new GapHandlerProps.Topics(
                 "cdc-in",
-                "cdc-fill-event",
+                "cdc-out",
                 "cdc-fill-command",
-                "cdc-out"
+                "cdc-fill-event"
         );
         var state = new GapHandlerProps.State("cdc-state", 1_000_000, 60, 120);
         var meterRegistry = Mockito.mock(GapHandlerMetrics.class);

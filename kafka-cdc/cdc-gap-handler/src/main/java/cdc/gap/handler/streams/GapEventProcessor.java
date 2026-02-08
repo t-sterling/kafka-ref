@@ -214,11 +214,11 @@ public class GapEventProcessor extends ContextualProcessor<String, CdcEvent, Str
             state.entityType = evt.entity;
             this.stateStore.put(evt.recordId, state);
         }
-        var forwardRecord = record.withValue(new Either<CdcEvent, FillCommand>(
+        var commandRecord = record.withValue(new Either<CdcEvent, FillCommand>(
             null,
             new FillCommand(evt.recordId, evt.entity, evt.eventId)
         ));
-        this.context.forward(forwardRecord, this.fillCommandForwarder);
+        this.context.forward(commandRecord, this.fillCommandForwarder);
         this.metrics.count(GapHandlerMetrics.CDC_FILL_COMMAND_PUBLISHED_COUNT);
 
     }

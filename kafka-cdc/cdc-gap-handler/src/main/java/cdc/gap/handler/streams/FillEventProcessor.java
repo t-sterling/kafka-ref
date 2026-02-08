@@ -57,8 +57,8 @@ public class FillEventProcessor extends ContextualProcessor<String, FillEvent, S
 
             // send a fake cdc 'fill event' which just includes all fields
             //
-            var fillEvent = createFillEvent(record.value());
-            this.context.forward(record.withValue(fillEvent), this.cdcOutput);
+            var cdcFillEvent = createCdcEvent(record.value());
+            this.context.forward(record.withValue(cdcFillEvent), this.cdcOutput);
             this.metrics.count(CDC_EVENT_FILLED_COUNT);
 
             // now replay anything in the cdc buffer more recent
@@ -80,7 +80,7 @@ public class FillEventProcessor extends ContextualProcessor<String, FillEvent, S
 
     }
 
-    private CdcEvent createFillEvent(FillEvent fillEvent){
+    private CdcEvent createCdcEvent(FillEvent fillEvent){
 
         // Create a new CdcEvent instance
         CdcEvent cdcEvent = new CdcEvent();
