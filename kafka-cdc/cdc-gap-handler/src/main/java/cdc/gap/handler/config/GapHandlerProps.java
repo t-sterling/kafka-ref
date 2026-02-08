@@ -21,7 +21,9 @@ public record GapHandlerProps(
 
     public record State(
         String storeName,
-        int maxBufferPerRecord
+        int maxBufferPerRecord,
+        int staleGapCheckIntervalSeconds,
+        int staleGapThresholdSeconds
     ) {}
 
     public record Retries(

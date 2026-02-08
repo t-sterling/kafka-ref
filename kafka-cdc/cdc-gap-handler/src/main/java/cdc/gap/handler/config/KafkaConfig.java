@@ -49,6 +49,14 @@ public class KafkaConfig {
         return new KafkaTemplate<>(producerFactory);
     }
 
+    /**
+     * publish FillCommands for startup recovery
+     */
+    @Bean
+    public KafkaTemplate<String, FillCommand> fillCommandKafkaTemplate(ProducerFactory<String, FillCommand> producerFactory) {
+        return new KafkaTemplate<>(producerFactory);
+    }
+
     @Bean
     FillerService fillerService(KafkaTemplate<String, FillEvent> kafkaTemplate,
                                      RestTemplate restTemplate,

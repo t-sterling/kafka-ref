@@ -14,6 +14,7 @@ import org.springframework.web.client.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class FillerService {
@@ -103,13 +104,13 @@ public class FillerService {
                 .toUriString();
     }
 
-    private void publishFillEvent(FillEvent refreshedEvent) {
-        var future = this.kafkaTemplate.send(responseTopic, refreshedEvent.recordId(), refreshedEvent);
-        future.whenComplete((recordMetadata, exception) -> {
-            if(exception != null){
-                LOG.error("Error sending response for record {}", refreshedEvent.recordId(), exception);
-            }
-        });
+    private void publishFillEvent(FillEvent refreshedEvent) throws TransientFillException {
+        try {
+            this.kafkaTemplate.send(responseTopic, refreshedEvent.recordId(), refreshedEvent)
+                    .get(30, TimeUnit.SECONDS);
+        } catch (Exception e){
+            throw new TransientFillException("Error sending response for record {}", e);
+        }
     }
 
 }

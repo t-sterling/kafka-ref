@@ -34,6 +34,9 @@ public class GapHandlerMetrics {
     /** how many fill-command timed-out */
     public static final String CDC_FILL_COMMAND_TIMEOUT = "cdc.fill-commands.timeout";
 
+    /** how many fill-commands were re-sent due to stale gap recovery */
+    public static final String CDC_FILL_COMMAND_RESENT_COUNT = "cdc.fill-commands.resent";
+
     /** how many fill-events did we receive */
     public static final String CDC_FILL_EVENT_RECEIVED_COUNT = "cdc.fill-event.received";
 

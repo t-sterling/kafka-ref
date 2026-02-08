@@ -59,7 +59,8 @@ public class MutationEngine {
         List<String> ids = repo.allIdsSnapshot();
         if (ids.isEmpty()) return;
 
-        String id = ids.get(rnd.nextInt(ids.size()));
+        //String id = ids.get(rnd.nextInt(ids.size()));
+        String id = ids.get(rnd.nextInt(5));
         Employee e = repo.get(id).orElse(null);
         if (e == null) return;
 

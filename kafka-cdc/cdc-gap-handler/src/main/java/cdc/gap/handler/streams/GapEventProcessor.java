@@ -5,12 +5,16 @@ import cdc.gap.handler.domain.CdcEvent;
 
 import cdc.gap.handler.domain.Either;
 import cdc.gap.handler.domain.FillCommand;
+import org.apache.kafka.streams.processor.PunctuationType;
 import org.apache.kafka.streams.processor.api.ContextualProcessor;
 import org.apache.kafka.streams.processor.api.ProcessorContext;
 import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
+import java.util.UUID;
 
 import static cdc.gap.handler.config.GapHandlerMetrics.*;
 
@@ -30,6 +34,8 @@ public class GapEventProcessor extends ContextualProcessor<String, CdcEvent, Str
     private final String cdcForwarder;
     private final String fillCommandForwarder;
     private final GapHandlerMetrics metrics;
+    private final Duration staleGapCheckInterval;
+    private final Duration staleGapThreshold;
 
     private KeyValueStore<String, GapEventState> stateStore;
     private ProcessorContext<String, Either<CdcEvent, FillCommand>> context;
@@ -37,11 +43,15 @@ public class GapEventProcessor extends ContextualProcessor<String, CdcEvent, Str
     public GapEventProcessor(String stateStoreName,
                              String cdcForwarder,
                              String fillCommandForwarder,
-                             GapHandlerMetrics gapHandlerMetrics) {
+                             GapHandlerMetrics gapHandlerMetrics,
+                             Duration staleGapCheckInterval,
+                             Duration staleGapThreshold) {
         this.stateStoreName = stateStoreName;
         this.cdcForwarder = cdcForwarder;
         this.fillCommandForwarder = fillCommandForwarder;
         this.metrics = gapHandlerMetrics;
+        this.staleGapCheckInterval = staleGapCheckInterval;
+        this.staleGapThreshold = staleGapThreshold;
     }
 
     @Override
@@ -49,6 +59,64 @@ public class GapEventProcessor extends ContextualProcessor<String, CdcEvent, Str
         super.init(context);
         this.context = context;
         this.stateStore = context.getStateStore(this.stateStoreName);
+
+        // schedule punctuator to check for stale gaps and re-send FillCommands
+        //
+        context.schedule(
+            staleGapCheckInterval,
+            PunctuationType.WALL_CLOCK_TIME,
+            this::checkStaleGaps
+        );
+    }
+
+    /**
+     * Punctuator that scans for stale gaps (gaps that have been open longer than threshold)
+     * and re-sends FillCommands. This handles the case where a FillCommand was lost
+     * due to a crash between state store commit and topic write.
+     */
+    private void checkStaleGaps(long timestamp) {
+        var thresholdMs = staleGapThreshold.toMillis();
+
+        try (var iter = stateStore.all()) {
+            while (iter.hasNext()) {
+                var entry = iter.next();
+                var recordId = entry.key;
+                var state = entry.value;
+
+                if (state.inGap && state.gapStartedAt > 0) {
+                    var gapAge = timestamp - state.gapStartedAt;
+                    if (gapAge > thresholdMs) {
+                        LOG.warn("re-sending FillCommand for stale gap: {} (age={}ms)", recordId, gapAge);
+                        resendFillCommand(recordId, state, timestamp);
+                        metrics.count(CDC_FILL_COMMAND_RESENT_COUNT);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Re-sends a FillCommand for a stale gap. Updates gapStartedAt to avoid
+     * re-sending on every punctuation cycle.
+     */
+    private void resendFillCommand(String recordId, GapEventState state, long timestamp) {
+
+        // update gapStartedAt so we don't immediately re-send again
+        //
+        state.gapStartedAt = timestamp;
+        this.stateStore.put(recordId, state);
+
+        var fillCommand = new FillCommand(
+            recordId,
+            state.entityType,
+            "resend-" + UUID.randomUUID()
+        );
+        var record = new Record<>(
+            recordId,
+            new Either<CdcEvent, FillCommand>(null, fillCommand),
+            timestamp
+        );
+        this.context.forward(record, this.fillCommandForwarder);
     }
 
     @Override
@@ -142,6 +210,8 @@ public class GapEventProcessor extends ContextualProcessor<String, CdcEvent, Str
         if(this.stateStore.get(evt.recordId) == null) {
             var state = new GapEventState();
             state.inGap = true;
+            state.gapStartedAt = System.currentTimeMillis();
+            state.entityType = evt.entity;
             this.stateStore.put(evt.recordId, state);
         }
         var forwardRecord = record.withValue(new Either<CdcEvent, FillCommand>(

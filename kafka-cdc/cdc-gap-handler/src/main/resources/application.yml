@@ -8,7 +8,7 @@ spring:
     # streaming part is hot path. cdc-in -> gap detection -> cdc-out
     #
     streams:
-      application-id: cdc-gap-handler
+      application-id: cdc-gap-handler-2
 
     # async side, simple consumer/producer work queue
     #
@@ -36,7 +36,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: "*"
+        include: health,counters,gap,prometheus
 
   endpoint:
     prometheus:
@@ -47,6 +47,8 @@ gap-handler:
   state:
     max-buffer-per-record: 1_000_000
     store-name: "gap-state-store"
+    stale-gap-check-interval-seconds: 60
+    stale-gap-threshold-seconds: 120
   topics:
       cdc-in: CDC-INPUT
       cdc-out: CDC-OUTPUT

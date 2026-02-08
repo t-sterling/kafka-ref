@@ -14,7 +14,7 @@
   <modules>
     <module>cdc-simulator</module>
     <module>cdc-gap-handler</module>
-    <module>cdc-compensator</module>
+    <module>cdc-common</module>
   </modules>
 
   <artifactId>kafka-cdc</artifactId>

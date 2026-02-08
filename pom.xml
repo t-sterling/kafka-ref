@@ -9,6 +9,7 @@
 
     <modules>
         <module>kafka-cdc</module>
+      <module>kafka-cdc/cdc-formula-materializer</module>
     </modules>
 
     <properties>

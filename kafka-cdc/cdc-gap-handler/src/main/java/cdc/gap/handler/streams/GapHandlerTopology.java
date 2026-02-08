@@ -14,6 +14,8 @@ import org.apache.kafka.streams.state.Stores;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+
 public class GapHandlerTopology {
 
     private static final Logger LOG = LoggerFactory.getLogger(GapHandlerTopology.class);
@@ -61,13 +63,16 @@ public class GapHandlerTopology {
 
         // link a processor which recognizes gap-events and forks the stream
         //
+        var stateProps = gapHandlerProps.state();
         topology.addProcessor(
                 ProcessorNames.GAP_HANDLER_PROCESSOR,
                 () -> new GapEventProcessor(
-                    gapHandlerProps.state().storeName(),
+                    stateProps.storeName(),
                     ProcessorNames.CDC_EVENT_FORWARDER,
                     ProcessorNames.FILL_COMMAND_FORWARDER,
-                    gapHandlerMetrics
+                    gapHandlerMetrics,
+                    Duration.ofSeconds(stateProps.staleGapCheckIntervalSeconds()),
+                    Duration.ofSeconds(stateProps.staleGapThresholdSeconds())
                 ),
                 topics.cdcIn()
         );

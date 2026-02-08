@@ -19,6 +19,18 @@ public class GapEventState {
     public boolean inGap = false;
 
     /**
+     * When the gap was first detected (epoch ms).
+     * Used to detect stale gaps that need FillCommand re-send.
+     */
+    public long gapStartedAt = 0L;
+
+    /**
+     * Entity type from the original gap event.
+     * Needed to re-create FillCommand on recovery.
+     */
+    public String entityType;
+
+    /**
      * After recovery, we drop any buffered events older than this cutoff.
      * (Used to prevent re-emitting stale CDC that occurred before refresh completed.)
      */

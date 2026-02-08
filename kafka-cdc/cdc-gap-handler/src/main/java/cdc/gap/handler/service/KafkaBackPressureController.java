@@ -22,8 +22,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * This controls back pressure from Kafka if/when the FillService is failing
  * When too many commands fail and the circuit opens the Kafka consumer will be paused. (this doesn't cause a rebalance since heartbeats are maintained)
- *
- * The FillService should
  */
 @Component
 public class KafkaBackPressureController {
@@ -52,6 +50,7 @@ public class KafkaBackPressureController {
         this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "fill-retry"));
         this.retryLoopRunning = new AtomicBoolean(false);
         this.maxOutage = Duration.ofMinutes(retries.maxOutageMinutes());
+        this.backoff = Duration.ofSeconds(retries.initialBackoffSeconds());
     }
 
     @KafkaListener(
@@ -62,8 +61,8 @@ public class KafkaBackPressureController {
     public void consumeMessage(@Payload FillCommand command, Acknowledgment ack) {
         try {
             this.fillerService.processCommand(command);
-            ack.acknowledge();
             processingSucceeded();
+            ack.acknowledge(); // only ack on success
         } catch (TransientFillException e) {
             LOG.info(e.getMessage(), e);
             processingFailed(e, command);
@@ -72,7 +71,6 @@ public class KafkaBackPressureController {
 
     private void processingSucceeded() {
         this.outageStart = null;
-        this.backoff = Duration.ofSeconds(this.retries.initialBackoffSeconds());
         this.retryLoopRunning.set(false);
         resume();
     }
@@ -91,17 +89,18 @@ public class KafkaBackPressureController {
         if (this.outageStart == null) {
             this.outageStart = Instant.now();
         }
+        this.backoff = Duration.ofSeconds(this.retries.initialBackoffSeconds());
         pause();
         startRetryLoop(command);
     }
 
     /**
-     * Pause the Kafka subscription without rebalancing
+     * Pause the Kafka subscription without re-balancing
      */
     private void pause() {
-        LOG.warn("pausing filer-service subscription due to transient failure.");
         var container = messageListenerContainer();
         if (container != null) {
+            LOG.warn("pausing filer-service subscription due to transient failure.");
             container.pause();
         }
     }
@@ -111,6 +110,7 @@ public class KafkaBackPressureController {
     }
 
     private void startRetryLoop(FillCommand command) {
+        LOG.warn("fill command failed, retrying in {} seconds", backoff.getSeconds());
         if (retryLoopRunning.compareAndSet(false, true)) {
             scheduleRetry(command);
         }
@@ -122,7 +122,7 @@ public class KafkaBackPressureController {
      * @param command
      */
     private void scheduleRetry(FillCommand command){
-        var delay = withJitter(Duration.ofSeconds(this.retries.initialBackoffSeconds()));
+        var delay = withJitter(this.backoff);
         scheduler.schedule(() -> {
 
             try {
@@ -136,11 +136,13 @@ public class KafkaBackPressureController {
                 //
                 fillerService.processCommand(command);
                 processingSucceeded();
+                LOG.info("retry succeeded for {}", command.recordId());
 
             } catch (Exception ignore) {
 
                 // Still down => pause stays in effect; increase backoff and try again
                 this.backoff = nextBackoff(backoff);
+                LOG.warn("retrying fill command in {} seconds", backoff.getSeconds());
                 scheduleRetry(command);
 
             }

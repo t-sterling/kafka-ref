@@ -65,7 +65,7 @@ public class FillEventProcessor extends ContextualProcessor<String, FillEvent, S
             //
             while(!state.buffer.isEmpty()) {
 
-                var cdcEvent = state.buffer.pollLast();
+                var cdcEvent = state.buffer.pollFirst();
                 // only flush records with a greater timestamp
                 if(cdcEvent.timestamp > record.value().cutoffLastModifiedEpochMs()) {
                     this.context.forward(record.withValue(cdcEvent), this.cdcOutput);

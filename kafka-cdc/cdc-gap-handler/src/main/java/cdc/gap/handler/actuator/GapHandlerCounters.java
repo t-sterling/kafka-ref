@@ -1,4 +1,4 @@
-package cdc.gap.handler.health;
+package cdc.gap.handler.actuator;
 
 import cdc.gap.handler.config.GapHandlerMetrics;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 import java.util.TreeMap;
 
-//@Endpoint(id = "counters")
-//@Component
+@Endpoint(id = "counters")
+@Component
 public class GapHandlerCounters {
 
     private final MeterRegistry meterRegistry;
