@@ -18,10 +18,10 @@ app:
   cdc:
     topic: CDC-INPUT
     initial-count: 2000
-    min-events-per-second: 10
-    max-events-per-second: 50
+    min-events-per-second: 0
+    max-events-per-second: 0
 
     gap:
       enabled: true
-      probability: 0.1   # 10% of events are GAP
+      probability: 0.0   # 10% of events are GAP
 
